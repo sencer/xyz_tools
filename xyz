@@ -1,0 +1,13 @@
+#!/bin/bash
+
+export SCRIPT_DIR=$(dirname $0)
+
+program=${SCRIPT_DIR}/xyz_$1
+
+if [[ ! -f $program ]]; then
+  echo "xyz $1 not found."
+  exit -1
+fi
+
+${program} "${@:2}"
+

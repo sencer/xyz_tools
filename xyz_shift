@@ -1,0 +1,25 @@
+#!/bin/bash
+
+if [[ $# -ne 4 ]]; then
+  echo "Usage: xyz shift x y z file"
+  exit -1
+fi
+
+re='^-?[0-9]+([.][0-9]+)?$' 
+for i in x y z; do
+  if ! [[ $1 =~ $re ]]; then
+    echo "${i} should be a number."
+    exit -1
+  fi
+  declare ${i}="$1"
+  shift
+done
+
+file=$1
+
+set -e
+$SCRIPT_DIR/check_files $file &>/dev/null
+
+awk -vx=$x -vy=$y -vz=$z 'NR>2{
+  printf "%-3s %14.8f %14.8f %14.8f\n", $1, $2+x, $3+y, $4+z
+} NR<3' "$file"

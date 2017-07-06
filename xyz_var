@@ -1,0 +1,17 @@
+#!/bin/bash
+
+if [[ $# -ne 1 ]]; then
+  echo "Usage: xyz var file"
+  exit -1
+fi
+
+set -e
+check_files $1 &>/dev/null
+
+com=( $($SCRIPT_DIR/xyz_com $1) )
+
+awk -vcx=${com[0]} -vcy=${com[1]} -vcz=${com[2]} 'NR>2 {
+    nat++; x+=($2-cx)**2; y+=($3-cy)**2; z+=($4-cz)**2
+  } END {
+    printf "%10.6f %10.6f %10.6f\n", sqrt(x/nat), sqrt(y/nat), sqrt(z/nat)
+  }' $1

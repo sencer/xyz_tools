@@ -1,0 +1,30 @@
+#!/bin/bash
+
+if [[ $1 == '-q' ]]; then
+  quiet=1
+  shift
+fi
+
+files=""
+
+for file in $@; do
+  if [[ ! -f "$file" ]]; then
+    if [[ quiet -ne 1 ]]; then
+      echo "File ${file} not found." >&2
+    fi
+    error=1
+  else
+    files="$files $file"
+  fi
+done
+
+if [[ quiet -ne 1 ]]; then
+  echo "$files"
+fi
+
+if [[ error -eq 1 ]]; then
+  exit -1
+else
+  exit 0
+fi
+
