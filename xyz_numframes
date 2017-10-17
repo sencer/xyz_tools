@@ -1,0 +1,50 @@
+#!/bin/bash
+
+if [[ $# -lt 1 ]]; then
+  echo "Usage: xyz numframes [-f] file [file2 [file3 ...]]"
+  echo "-f Force read all frames, if num atoms is variable"
+  exit -1
+fi
+
+if [[ $1 == "-f" ]]; then
+  force=1
+  shift
+fi
+
+set -e
+$SCRIPT_DIR/check_files -q $@
+
+quick_check () {
+  nat=$(head -1 $1)
+  echo "$(wc -l < $1)/($nat+2)"|bc -lq
+}
+
+real_check () {
+  awk '{
+    if(NF>1) { print "Wrong number of fields."; exit -1 }
+    nat=$1
+    getline
+    for(i=0; i<nat; i++) {
+      getline
+    }
+    frame++
+  } END { print frame }' $1
+}
+
+if [[ $force ]]; then
+  if [[ $# -eq 1 ]]; then
+    real_check $1
+  else
+    for i in $@; do
+      echo "$i $(real_check $i)"
+    done
+  fi
+else
+  if [[ $# -eq 1 ]]; then
+    quick_check $1
+  else
+    for i in $@; do
+      echo "$i $(quick_check $i)"
+    done
+  fi
+fi
