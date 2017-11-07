@@ -1,0 +1,15 @@
+#!/bin/bash
+
+if [[ $# -lt 1 || $# -gt 2 || $1 == -h ]]; then
+  echo "Usage: xyz first file [num]"
+  exit 1
+fi
+
+set -e
+$SCRIPTDIR/check_files -q $1
+
+# get n, m: first, last frame of interest
+n=1
+m=$((n+${2:-1}-1))
+
+$SCRIPTDIR/xyz_slice "$1" $n $m

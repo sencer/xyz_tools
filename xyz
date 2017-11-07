@@ -1,18 +1,56 @@
 #!/bin/bash
 
-if [[ $# -lt 2 ]]; then
+if [[ $# -lt 1 ]]; then
   echo "Usage: xyz program [arguments]"
-  exit -1
+  exit 1
 fi
 
-export SCRIPT_DIR=$(dirname $0)
+args="${@:2}"
 
-program=${SCRIPT_DIR}/xyz_$1
+if [[ ! -t 0 ]]; then
+  # if exists, save the stdin to a file
 
-if [[ ! -f $program ]]; then
+  # decide if it is an lammpstrj or an xyz
+  read first_line
+  if [[ "$first_line" = ITEM* ]]; then
+    suffix=".lammpstrj"
+  else # assume xyz otherwise
+    suffix=".xyz"
+  fi
+
+  # use of /dev/shm is experimental!
+  tmp_file=$(mktemp -p /dev/shm --suffix $suffix)
+
+  # do not forget deleting the file when exiting at the end
+  trap "rm -f $tmp_file" EXIT
+
+  # write to file
+  echo "$first_line" > "$tmp_file"
+  cat >> "$tmp_file"
+
+  args="$tmp_file $args"
+fi
+
+# export the directory of the scripts
+export SCRIPTDIR=$(dirname $(readlink -f $0))
+
+# call the real script name, full path
+program=${SCRIPTDIR}/xyz_$1
+
+if [[ ! -x $program ]]; then
   echo "xyz $1 not found."
-  exit -1
+  exit 1
 fi
 
-${program} "${@:2}"
+# separate switches and other arguments
+switches=""
+otherarg=""
+for arg in $args; do
+  if [[ $arg == -* ]] && ! $SCRIPTDIR/check_float -q $arg; then
+    switches="$switches $arg"
+  else
+    otherarg="$otherarg $arg"
+  fi
+done
 
+${program} $switches $otherarg

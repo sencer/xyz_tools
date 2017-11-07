@@ -1,17 +1,21 @@
 #!/bin/bash
 
-if [[ $# -ne 1 ]]; then
+if [[ $# -ne 1 || "$1" == -h ]]; then
   echo "Usage: xyz var file"
-  exit -1
+  exit 1
 fi
 
 set -e
-check_files $1 &>/dev/null
+$SCRIPTDIR/check_files $1
 
-com=( $($SCRIPT_DIR/xyz_com $1) )
+nat=$($SCRIPTDIR/xyz_nat "$1")
+com=($($SCRIPTDIR/xyz_com $1))
+[[ "$1" == *.lammpstrj ]] && header=9 || header=2
 
-awk -vcx=${com[0]} -vcy=${com[1]} -vcz=${com[2]} 'NR>2 {
-    nat++; x+=($2-cx)**2; y+=($3-cy)**2; z+=($4-cz)**2
-  } END {
+awk -vnat=$nat -vcx=${com[0]} -vcy=${com[1]} -vcz=${com[2]} -vh=$header 'NR>h {
+    x+=($2-cx)**2; y+=($3-cy)**2; z+=($4-cz)**2
+    print NR
+  } NR>h+nat {
     printf "%10.6f %10.6f %10.6f\n", sqrt(x/nat), sqrt(y/nat), sqrt(z/nat)
+    exit
   }' $1

@@ -1,0 +1,42 @@
+#!/bin/bash
+
+if [[ $1 == "-f" ]]; then
+  force=1
+  shift
+fi
+
+if [[ $# -lt 1 ]]; then
+  echo "Usage: xyz nframes [-f] [file]"
+  echo "-f Force read all frames, if num atoms is variable"
+  echo "If no file is given, will read the stdin"
+  exit 1
+fi
+
+set -e
+$SCRIPTDIR/check_files "$1"
+
+quick_check () {
+  nat=$($SCRIPTDIR/xyz_nat "$1")
+  echo "scale=0;$(wc -l < $1)/($nat+$header)"|bc -lq
+}
+
+real_check () {
+  awk -vskip1=$2 -vskip2=$3 '{
+    for ( i = 0; i < skip1; i++ ) getline
+    nat = $1
+    for ( i = 0; i < skip2 + nat; i++ ) getline
+    frame++
+  } END { print frame }' $1
+}
+
+if [[ "$1" == *.lammpstrj ]]; then
+  header=9
+  skip1=3
+  skip2=5
+else
+  header=2
+  skip1=0
+  skip2=1
+fi
+
+(( $force )) && real_check "$1" $skip1 $skip2 || quick_check "$1" $header

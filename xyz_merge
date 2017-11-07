@@ -1,28 +1,26 @@
 #!/bin/bash
+
 if [[ $# -lt 1 ]]; then
   echo "Usage: xyz merge [-f] file1 [file2 [file3 ...]]"
   echo "-f force = continue even if some files are not found"
-  exit -1
+  exit 1
 fi
 
-if [[ $1 == "-f" ]]; then
-  force=1
-  shift
-fi
+[[ $1 == -f ]] && shift || set -e
 
-files="$@"
+files=($($SCRIPTDIR/check_files $@))
 
-if [[ $force -ne 1 ]]; then
-  set -e
-fi
-
-files=( $($SCRIPT_DIR/check_files $files) )
-
-nat=$(($(cat ${files[@]}|wc -l)-${#files[@]}*2))
-
-echo $nat
-sed -n '2{p;q}' ${files[0]}
+newnat=0
 
 for file in ${files[@]}; do
-  tail -n +3 "$file"
+  newnat=$((newnat+$($SCRIPTDIR/xyz_nat $file)))
+done
+
+
+[[ "$1" == *.lammpstrj ]] && natline=4 || natline=1
+
+sed "${natline}c${newnat}" "${files[0]}"
+
+for file in ${files[@]:1}; do
+  $SCRIPTDIR/xyz_coor "$file"
 done

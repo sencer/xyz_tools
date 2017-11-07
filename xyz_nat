@@ -1,0 +1,20 @@
+#!/bin/bash
+# return the number of atoms of the first frame of an
+# xyz or lammpstrj file
+
+if [[ $# -ne 1 || "$1" == -h ]]; then
+  echo "Usage: xyz nat [file or stdin]"
+  echo "Return the number of atoms information from file header"
+  echo "If no file given, will read the stdin"
+  exit 1
+fi
+
+set -e
+$SCRIPTDIR/check_files "$1"
+
+if [[ "$1" = *.lammpstrj ]]; then
+  grep -m1 -A1 -F "NUMBER OF ATOMS" $1|tail -1
+else
+  # assume xyz format otherwise
+  head -1 "$1"
+fi

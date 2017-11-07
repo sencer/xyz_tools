@@ -1,30 +1,30 @@
 #!/bin/bash
 
-if [[ $1 == '-q' ]]; then
-  quiet=1
-  shift
-fi
+# quiet?
+[[ $1 == -q ]] && {
+  quiet=1; shift
+} || quiet=0
 
-files=""
+# if single file, and exists return 0 / not exists return 1
+[[ $# == 1 ]] && {
+  [[ -s "$1" ]] && exit 0 || exit 1
+}
 
+# otherwise
+
+exists=""
 for file in $@; do
-  if [[ ! -f "$file" ]]; then
-    if [[ $quiet -ne 1 ]]; then
-      echo "File ${file} not found." >&2
-    fi
+  if [[ ! -s "$file" ]]; then
+    (( $quiet )) || echo "File $file does not exist." >&2
     error=1
   else
-    files="$files $file"
+    exists="$exists $file"
   fi
 done
 
-if [[ $quiet -ne 1 ]]; then
-  echo "$files"
-fi
-
-if [[ $error -eq 1 ]]; then
-  exit -1
+if (( $error )); then
+  [[ -z ${exists// /} ]] && exit 2 || (echo $exists; exit 1)
 else
+  echo $exists
   exit 0
 fi
-

@@ -1,0 +1,17 @@
+#!/bin/bash
+
+if [[ $# -ne 1 || "$1" == -h ]]; then
+  echo "Usage: xyz coor [file]"
+  echo "Returns coordinates of a single frame"
+  echo "file should be given if data not read from stdin"
+  exit 1
+fi
+
+set -e
+$SCRIPTDIR/check_files "$1"
+
+nat=$($SCRIPTDIR/xyz_nat "$1")
+
+[[ "$1" == *.lammpstrj ]] && header=9 || header=2
+
+awk "NR>$header&&NR<$header+$nat+1" "$1"

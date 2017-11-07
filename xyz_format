@@ -1,0 +1,15 @@
+#!/bin/bash
+
+if [[ $# -ne 1 ]]; then
+  echo "Usage: xyz format [file]"
+  echo "Returns coordinates of a single frame"
+  echo "file should be given if data not read from stdin"
+  exit 1
+fi
+
+set -e
+
+$SCRIPTDIR/check_files "$1"
+
+$SCRIPTDIR/xyz_header "$1"
+$SCRIPTDIR/xyz_coor   "$1"|awk '{printf "%-4s %15.10f %15.10f %15.10f\n", $1, $2, $3, $4}'

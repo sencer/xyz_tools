@@ -1,0 +1,63 @@
+#!/bin/bash
+
+if [[ $# -lt 2 || $# -gt 3 || "$1" == -h ]]; then
+  echo "Usage: xyz framerange file n [m]"
+  echo "Returns the line number where frame n starts and frame m ends"
+  echo "If no file given, will read the stdin"
+  echo "m == n if not provided"
+  exit 1
+fi
+
+# get n, m: first, last frame of interest
+n=$2
+[[ $# -eq 2 ]] && m=$n || m=$3
+[[ $m -lt $n ]] && m=$2 && n=$3
+
+set -e
+$SCRIPTDIR/check_files "$1"
+
+if [[ "$1" = *.lammpstrj ]]; then
+  tmp=($(grep -n -m$((m+1)) -F "TIMESTEP" "$1"|tail +$n|cut -d':' -f1) )
+
+  (( ${#tmp[@]} )) || {
+    echo Frames do not exist >&2 
+    exit 2
+  }
+
+  if [[ ${#tmp[@]} -lt $((m-n+1)) ]]; then
+    echo -e "Some frames do not exist, check with:\n    xyz nframes '$1'" >&2
+    echo ${tmp[0]} $(wc -l < "$1")
+    exit 1
+  elif [[ ${#tmp[@]} -lt $((m-n+2)) ]]; then
+    echo ${tmp[0]} $(wc -l < "$1")
+    exit 0
+  else
+    echo ${tmp[0]} $((${tmp[-1]}-1))
+    exit 0
+  fi
+else
+  tmp=($(awk -vn=$n -vm=$m 'BEGIN{s=-1;e=-1}
+           {
+             frame++
+             if(frame==n) s=NR
+             if(frame==m+1) e=NR-1
+             nat=$1
+             for(i=0; i<=nat; i++) getline
+           }
+           END{
+             frame++
+             if(frame==m+1) e=NR
+           print s, e, NR}' $1))
+
+  if [[ ${tmp[0]} == -1 ]]; then
+    echo Frames do not exist >&2 
+    exit 2
+  elif [[ ${tmp[1]} == -1 ]]; then
+    echo -e "Not all frames exist, check with:\n    xyz nframes '$1'" >&2
+    echo ${tmp[0]} ${tmp[2]}
+    exit 1
+  else
+    echo ${tmp[0]} ${tmp[1]}
+    exit 0
+  fi
+fi

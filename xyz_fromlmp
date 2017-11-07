@@ -1,0 +1,46 @@
+#!/bin/bash
+
+if [[ $# -ne 1 ]]; then
+  echo "Usage: xyz fromlmp file"
+  echo "Returns com of a single frame"
+  exit 1
+fi
+
+set -e
+$SCRIPTDIR/check_files -q $1
+
+awk '{
+  if ( $0 == "ITEM: NUMBER OF ATOMS") {
+    getline; nat=$1; print
+  } else if ( $0 ~ /ITEM: BOX BOUNDS/ ) {
+    # orthorhombic only.
+    for(i = 0; i < 3; i++ ) {
+      getline
+      cell[i]=($2-$1)
+    }
+    printf("celldm %14.10f %14.10f %14.10f\n", cell[0], cell[1], cell[2])
+  } else if ( $0 ~ /ITEM: ATOMS/ ) {
+    for (i = 3; i < NF+1; i++) {
+      fields[$i] = i - 2
+    }
+    if(! "element" in fields ) exit 1
+
+    if("xu" in fields) x="xu"
+    else if("x" in fields)x="x"
+    else exit 1
+
+    if("yu" in fields) y="yu"
+    else if("y" in fields) y="y"
+    else exit 1
+
+    if("zu" in fields) z="zu"
+    else if("z" in fields) z="z"
+    else exit 1
+
+    for (i = 0;  i < nat; i++) {
+      getline
+      printf("%-3s %14.10f %14.10f %14.10f\n", $fields["element"], 
+      $fields[x], $fields[y], $fields[z])
+    }
+  }
+}' $1

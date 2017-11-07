@@ -1,0 +1,18 @@
+#!/bin/bash
+
+if [[ $# -lt 2 || $# -gt 3 || $1 == -h ]]; then
+  echo "Usage: xyz slice file first [last]"
+  exit 1
+fi
+# TODO: first getting the range, then printing does twice the work that is 
+# necessary. Can be done in one shot, without calling framerange
+
+set -e
+$SCRIPTDIR/check_files -q $1
+
+# get n, m: first, last frame of interest
+n=$2
+[[ $# -eq  2 ]] && m=$n || m=$3
+[[ $m -lt $n ]] && m=$2 && n=$3
+
+sed -n "$($SCRIPTDIR/xyz_framerange "$1" $n $m|tr ' ' ',')p" "$1"

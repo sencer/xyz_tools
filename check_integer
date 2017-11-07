@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# quiet?
+[[ $1 == -q ]] && {
+  quiet=1; shift
+} || quiet=0
+
+re='^-?[0-9]+$'
+
+if [[ $1 =~ $re ]]; then
+  exit 0
+else
+  (( $quiet )) ||   echo $1 is not an integer >&2
+  exit 1
+fi
