@@ -5,7 +5,6 @@
   slow=1; shift
 } || slow=0
 
-
 if [[ $# -lt 1 || $# -gt 2 || $1 == -h ]]; then
   echo "Usage: xyz last [-s] file [num]"
   echo "Use the slower, but more robust version."
@@ -14,7 +13,6 @@ fi
 
 set -e
 $SCRIPTDIR/check_files -q $1
-
 
 if (( $slow )); then
 
@@ -29,6 +27,6 @@ else
   if [[ $1 == *.lammpstrj ]]; then
     tac $1 | awk -vn=${2:-1} '{print}/TIMESTEP/{counter++}n==counter{exit}'|tac
   else
-    tac $1 | awk '-vn{print, last=NF}NF==1&&last!=1{counter++}n==counter{exit}' | tac
+    tac $1 | awk -vn=${2:-1} 'NF==1&&last!=1{counter++}{print; last=NF}n==counter{exit}' | tac
   fi
 fi
