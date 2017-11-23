@@ -1,0 +1,22 @@
+#!/bin/bash
+
+if [[ $# -ne 1 || "$1" == -h ]]; then
+  echo "Usage: xyz average [file]"
+  echo "Calculate the average positions"
+  exit 1
+fi
+
+set -e
+$SCRIPTDIR/check_files "$1"
+
+nat=$($SCRIPTDIR/xyz_nat "$1")
+
+[[ "$1" == *.lammpstrj ]] && header=9 || header=2
+
+$SCRIPTDIR/xyz_header $1
+
+awk -vskip=$header -vnat=$nat '
+     NR==skip{i=0; nf++}
+     NR>skip{el[i]=$1; x[i]+=$2; y[i]+=$3; z[i]+=$4;i++}
+     END{for(i=0;i<nat;i++)
+       printf "%-3s %15.9f %15.9f %15.9f\n", el[i], x[i]/nf, y[i]/nf, z[i]/nf}' $1
