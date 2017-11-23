@@ -23,7 +23,12 @@ quick_check () {
 real_check () {
   awk -vskip1=$2 -vskip2=$3 '{
     for ( i = 0; i < skip1; i++ ) getline
-    nat = $1
+      if(NF>1) { 
+        print "Wrong number of fields in `nat` line"
+        exit
+      } else {
+        nat = $1
+      }
     for ( i = 0; i < skip2 + nat; i++ ) getline
     frame++
   } END { print frame }' $1
