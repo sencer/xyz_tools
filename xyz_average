@@ -17,6 +17,16 @@ $SCRIPTDIR/xyz_header $1
 
 awk -vskip=$header -vnat=$nat '
      NR==skip{i=0; nf++}
-     NR>skip{el[i]=$1; x[i]+=$2; y[i]+=$3; z[i]+=$4;i++}
-     END{for(i=0;i<nat;i++)
-       printf "%-3s %15.9f %15.9f %15.9f\n", el[i], x[i]/nf, y[i]/nf, z[i]/nf}' $1
+     NR>skip{el[i]=$1;
+     for(j=2; j<=NF; j++)
+       data[i][j] += $j
+      i++
+    }
+    END{
+      for(i=0;i<nat;i++) {
+        printf "%-3s ", el[i]
+        for(j=2; j<=NF; j++)
+          printf "%15.9f ", data[i][j]/nf
+        printf "\n"
+      }
+    }' $1

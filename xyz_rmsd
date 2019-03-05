@@ -11,7 +11,7 @@ files="$@"
 
 files=( $($SCRIPTDIR/check_files $files) )
 
-if   [[ ${@files[@]} -eq 1 ]]; then
+if   [[ ${#files[@]} -eq 1 ]]; then
   nat=$($SCRIPTDIR/xyz_nat ${files[0]})
   [[ "${files[0]}" == *.lammpstrj ]] && header=9 || header=2
   awk -vnat=$(nat) -vskip=$header '
@@ -42,7 +42,7 @@ if   [[ ${@files[@]} -eq 1 ]]; then
         sum = 0
       }
     }' ${files[0]}
-elif [[ ${@files[@]} -eq 2 ]]; then
+elif [[ ${#files[@]} -eq 2 ]]; then
   nat=$($SCRIPTDIR/xyz_nat ${files[0]})
 
   if [[ $nat -ne $($SCRIPTDIR/xyz_nat ${files[1]}) ]]; then
@@ -55,11 +55,12 @@ elif [[ ${@files[@]} -eq 2 ]]; then
     exit 1
   fi
 
-  [[ "${files[0]}" == *.lammpstrj ]] && header1=9 || header2=2
+  [[ "${files[0]}" == *.lammpstrj ]] && header=9 || header=2
 
-  paste ${files[@]}|awk -vn=$nat -vskip=$header '{
-    atom = ( (NR-1) % (nat+skip) - skip ) # atom index
-      if (atom == -1) {
+  paste ${files[@]}|awk -vnat=$nat -vskip=$header '{
+      atom = ( (NR-1) % (nat+skip) - skip ) # atom index
+#     print NR, nat, skip, atom
+      if (atom < 0) {
         rmsd = 0
       } else if (atoms > -1) {
         rmsd += ($2-$6)**2 + ($3-$7)**2 + ($4-$8)**2

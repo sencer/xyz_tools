@@ -13,6 +13,11 @@ nat=$($SCRIPTDIR/xyz_nat "$1")
 [[ "$1" == *.lammpstrj ]] && header=9 || header=2
 
 awk -vnat=$nat -vh=$header '
+  function print_out() { 
+    for(i=0; i<3; i++) {
+      printf "%15.10f %15.10f\n", min[i], max[i]
+    }
+  }
   NR==h+1{for(i=2; i<5; i++){ min[i-2]=$i; max[i-2]=$i}}
   NR>h+1&&NR<nat+h+1{
     for(i=2; i<5; i++) {
@@ -21,8 +26,6 @@ awk -vnat=$nat -vh=$header '
     }
   }
   NR==nat+h+1 {
-    for(i=0; i<3; i++) {
-      printf "%15.10f %15.10f\n", min[i], max[i]
-    }
+    print_out()
     exit
-  } ' "$1"
+  } END { print_out() } ' "$1"
